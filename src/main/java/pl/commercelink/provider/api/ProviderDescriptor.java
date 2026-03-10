@@ -12,4 +12,8 @@ public interface ProviderDescriptor<T> {
     List<ProviderField> configurationFields();
 
     T create(Map<String, String> configuration);
+
+    default T create(Map<String, String> configuration, Map<String, Object> context) {
+        return create(configuration);
+    }
 }
