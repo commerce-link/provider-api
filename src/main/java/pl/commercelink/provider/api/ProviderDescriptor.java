@@ -16,4 +16,8 @@ public interface ProviderDescriptor<T> {
     default T create(Map<String, String> configuration, Map<String, Object> context) {
         return create(configuration);
     }
+
+    default Map<String, String> metadata() {
+        return Map.of();
+    }
 }
