@@ -1,31 +1,75 @@
-# Provider API
+# provider-api
 
-Shared interfaces for the CommerceLink provider plugin system.
+Base plugin system for CommerceLink service providers. Defines the `ProviderDescriptor<T>` contract that all provider integrations implement — invoicing, shipping, payments, PIM, and others.
 
-This module defines the common types that all domain-specific provider APIs (invoicing, shipping, payments, etc.) build on:
+Implementations are discovered at runtime via Java `ServiceLoader` (`META-INF/services/`).
 
-- **`ProviderDescriptor<T>`** — base interface that every provider descriptor extends. Declares `name()`, `displayName()`, `configurationFields()`, and `create(Map<String, String>)`.
-- **`ProviderField`** — describes a single configuration field (key, label, type, required, placeholder). Field types: `TEXT`, `PASSWORD`, `URL`, `NUMBER`.
+## ProviderDescriptor<T>
 
-## Usage
+| Method                  | Required | Description                                                                 |
+|-------------------------|----------|-----------------------------------------------------------------------------|
+| `name()`                | yes      | Unique identifier, e.g. `"fakturownia"`, `"stripe"`, `"commercelink"`      |
+| `displayName()`         | yes      | Human-readable name, e.g. `"Fakturownia"`, `"Stripe"`, `"CommerceLink PIM"`|
+| `configurationFields()` | yes      | List of `ProviderField` entries describing the config schema                |
+| `create(configuration)` | yes      | Creates provider instance from `Map<String, String>` configuration          |
+| `create(configuration, context)` | default | Creates provider with additional runtime objects (e.g. `SqsAsyncClient`). Falls back to `create(configuration)` |
+| `metadata()`            | default  | Provider metadata, e.g. `{"authType": "oauth2"}`. Empty by default         |
+| `bindings()`            | default  | Event bindings the provider needs (SQS queues, webhooks). Empty by default  |
 
-Domain API modules depend on this artifact and define their own typed descriptor:
+## ProviderField
+
+Describes a single configuration parameter:
 
 ```java
-public interface XyzProviderDescriptor extends ProviderDescriptor<XyzProvider> {
+new ProviderField("apiKey", "API Key", FieldType.PASSWORD, true, "sk_live_...")
+```
+
+| Field         | Description                                           |
+|---------------|-------------------------------------------------------|
+| `key`         | Configuration map key                                 |
+| `label`       | Human-readable label for UI                           |
+| `type`        | `TEXT`, `PASSWORD`, `URL`, or `NUMBER`                 |
+| `required`    | Whether the field is mandatory                        |
+| `placeholder` | Placeholder/example value for UI                      |
+
+## EventBinding
+
+Sealed interface for declaring event sources. The hosting application reads `bindings()` and sets up the appropriate infrastructure.
+
+| Type              | Fields              | Description                        |
+|-------------------|---------------------|------------------------------------|
+| `QueueBinding<T>` | `queueName`, `eventType` | SQS queue to listen on        |
+| `WebhookBinding<T>` | `path`, `eventType`   | HTTP webhook endpoint to register |
+
+The application pattern-matches on the binding type:
+
+```java
+for (EventBinding<?> binding : descriptor.bindings()) {
+    switch (binding) {
+        case QueueBinding<?> q -> // set up SQS listener for q.queueName()
+        case WebhookBinding<?> w -> // set up HTTP route for w.path()
+    }
 }
 ```
 
-Provider implementations then implement that interface and register themselves for `ServiceLoader` discovery by creating a file under `META-INF/services/` whose name is the fully qualified descriptor interface:
+## Existing provider APIs
 
-```
-src/main/resources/META-INF/services/pl.commercelink.xyz.XyzProviderDescriptor
-```
+| API                          | Descriptor interface              | Implementations                         |
+|------------------------------|-----------------------------------|-----------------------------------------|
+| `invoicing-api`              | `InvoicingProviderDescriptor`     | `invoicing-fakturownia`, `invoicing-saldeosmart` |
+| `shipping-api`               | `ShippingProviderDescriptor`      | `shipping-furgonetka`                   |
+| `payments-api`               | `PaymentProviderDescriptor`       | `payments-stripe`, `payments-paynow`    |
+| `pim-api`                    | `PimCatalogDescriptor`            | `pim-commercelink`                      |
+| `marketplace-api`            | `MarketplaceDescriptor`           | `marketplace-morele`, `marketplace-empik`|
 
-with the fully qualified class name of the concrete implementation:
+## Creating a new provider
 
-```
-pl.commercelink.xyz.myimpl.MyXyzProviderDescriptor
-```
+1. Define a domain-specific API module (e.g. `my-api`) with an interface extending `ProviderDescriptor<T>`
+2. Create an implementation module (e.g. `my-provider`)
+3. Implement the descriptor with `name()`, `displayName()`, `configurationFields()`, `create()`
+4. Register via `META-INF/services/<descriptor-interface-fqn>`
+5. Add the implementation module as a dependency in `app/pom.xml`
 
-Without this registration, the provider will not be discovered at runtime.
+## License
+
+MIT

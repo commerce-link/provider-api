@@ -20,4 +20,8 @@ public interface ProviderDescriptor<T> {
     default Map<String, String> metadata() {
         return Map.of();
     }
+
+    default List<EventBinding<?>> bindings() {
+        return List.of();
+    }
 }
