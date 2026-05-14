@@ -21,6 +21,10 @@ public interface ProviderDescriptor<T> {
         return Map.of();
     }
 
+    default AuthConfig authConfig() {
+        return AuthConfig.None.INSTANCE;
+    }
+
     default List<EventBinding<?>> bindings() {
         return List.of();
     }
