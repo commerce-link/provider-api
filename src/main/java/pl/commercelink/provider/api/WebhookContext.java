@@ -2,7 +2,7 @@ package pl.commercelink.provider.api;
 
 import java.util.Map;
 
-public record WebhookContext(String storeId, Map<String, String> headers, Map<String, String> providerConfig) {
+public record WebhookContext(Map<String, String> headers, Map<String, String> providerConfig) {
 
     public String header(String name) {
         if (headers == null) {
