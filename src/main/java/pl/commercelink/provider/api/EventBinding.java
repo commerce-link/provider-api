@@ -8,12 +8,16 @@ public sealed interface EventBinding<T> {
 
     record QueueBinding<T>(String queueName, Class<T> eventType) implements EventBinding<T> {}
 
-    record WebhookBinding<T, R>(String path, Class<T> eventType, WebhookExecutor<T, R> executor) implements EventBinding<T> {
+    record WebhookBinding<R>(String path, WebhookExecutor<R> executor) implements EventBinding<String> {
 
         public WebhookBinding {
             Objects.requireNonNull(path, "path");
-            Objects.requireNonNull(eventType, "eventType");
             Objects.requireNonNull(executor, "executor");
+        }
+
+        @Override
+        public Class<String> eventType() {
+            return String.class;
         }
     }
 }
