@@ -11,15 +11,25 @@ public sealed interface AuthConfig permits AuthConfig.None, AuthConfig.OAuth2 {
             String authEndpointPath,
             String refreshEndpointPath,
             long refreshTokenExpirationSeconds,
-            String acceptHeader
+            String acceptHeader,
+            String refreshTokenFieldKey
     ) implements AuthConfig {
+
+        public OAuth2(
+                String apiUrl,
+                String authEndpointPath,
+                String refreshEndpointPath,
+                long refreshTokenExpirationSeconds,
+                String acceptHeader) {
+            this(apiUrl, authEndpointPath, refreshEndpointPath, refreshTokenExpirationSeconds, acceptHeader, null);
+        }
 
         public static OAuth2 of(
                 String apiUrl,
                 String authEndpointPath,
                 String refreshEndpointPath,
                 long refreshTokenExpirationSeconds) {
-            return new OAuth2(apiUrl, authEndpointPath, refreshEndpointPath, refreshTokenExpirationSeconds, null);
+            return new OAuth2(apiUrl, authEndpointPath, refreshEndpointPath, refreshTokenExpirationSeconds, null, null);
         }
     }
 }
