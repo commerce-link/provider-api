@@ -37,4 +37,26 @@ class AuthConfigTest {
         // then
         assertEquals("refreshToken", oauth2.refreshTokenFieldKey());
     }
+
+    @Test
+    void sixArgConstructorDefaultsContentTypeHeaderToNull() {
+        // given / when
+        AuthConfig.OAuth2 oauth2 = new AuthConfig.OAuth2(
+                "https://api.example.com", "/auth", "/refresh", 100L, "application/vnd.x+json", "refreshToken");
+
+        // then
+        assertNull(oauth2.contentTypeHeader());
+        assertEquals("refreshToken", oauth2.refreshTokenFieldKey());
+    }
+
+    @Test
+    void canonicalConstructorCarriesContentTypeHeader() {
+        // given / when
+        AuthConfig.OAuth2 oauth2 = new AuthConfig.OAuth2(
+                "https://api.example.com", "/auth", "/refresh", 100L,
+                "application/vnd.x+json", "refreshToken", "application/vnd.x+json");
+
+        // then
+        assertEquals("application/vnd.x+json", oauth2.contentTypeHeader());
+    }
 }
