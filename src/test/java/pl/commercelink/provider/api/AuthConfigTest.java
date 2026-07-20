@@ -59,4 +59,27 @@ class AuthConfigTest {
         // then
         assertEquals("application/vnd.x+json", oauth2.contentTypeHeader());
     }
+
+    @Test
+    void sevenArgConstructorDefaultsDeviceAuthUrlToNull() {
+        // given / when
+        AuthConfig.OAuth2 oauth2 = new AuthConfig.OAuth2(
+                "https://api.example.com", "/auth", "/refresh", 100L,
+                "application/vnd.x+json", "refreshToken", "application/vnd.x+json");
+
+        // then
+        assertNull(oauth2.deviceAuthUrl());
+    }
+
+    @Test
+    void canonicalConstructorCarriesDeviceAuthUrl() {
+        // given / when
+        AuthConfig.OAuth2 oauth2 = new AuthConfig.OAuth2(
+                "https://api.example.com", "/auth", "/refresh", 100L,
+                "application/vnd.x+json", "refreshToken", "application/vnd.x+json",
+                "https://auth.example.com/device");
+
+        // then
+        assertEquals("https://auth.example.com/device", oauth2.deviceAuthUrl());
+    }
 }
